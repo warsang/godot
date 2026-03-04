@@ -1,0 +1,73 @@
+name: Manual CodeQL Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to scan'
+        required: false
+        default: 'master'
+
+jobs:
+  analyze:
+    name: Analyze with CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['cpp', 'python']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}   # cleaner than github.event.inputs
+
+      - name: Install Godot build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            scons \
+            pkg-config \
+            libx11-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libgl1-mesa-dev \
+            libglu-dev \
+            libasound2-dev \
+            libpulse-dev \
+            libudev-dev \
+            libxi-dev \
+            libxrandr-dev \
+            yasm
+
+      - name: Set up Python (only needed for SCons in cpp job)
+        if: matrix.language == 'cpp'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Optional: source-root: '.' (default is fine)
+
+      #- name: Build with SCons (only for C++)
+      #  if: matrix.language == 'cpp'
+      #  run: |
+      #    scons -j$(nproc) platform=linuxbsd target=debug dev_build=yes
+
+      # Alternative (simpler): use autobuild instead of manual scons
+       - name: Autobuild (for C++)
+         if: matrix.language == 'cpp'
+         uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
