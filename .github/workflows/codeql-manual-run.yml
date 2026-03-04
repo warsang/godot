@@ -26,7 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}   # cleaner than github.event.inputs
+          ref: ${{ inputs.branch }}
 
       - name: Install Godot build dependencies
         run: |
@@ -57,17 +57,15 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          # Optional: source-root: '.' (default is fine)
 
-      #- name: Build with SCons (only for C++)
-      #  if: matrix.language == 'cpp'
-      #  run: |
-      #    scons -j$(nproc) platform=linuxbsd target=debug dev_build=yes
+      # - name: Build with SCons (only for C++)
+      #   if: matrix.language == 'cpp'
+      #   run: |
+      #     scons -j$(nproc) platform=linuxbsd target=debug dev_build=yes
 
-      # Alternative (simpler): use autobuild instead of manual scons
-       - name: Autobuild (for C++)
-         if: matrix.language == 'cpp'
-         uses: github/codeql-action/autobuild@v3
+      - name: Autobuild (for C++)
+        if: matrix.language == 'cpp'
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
